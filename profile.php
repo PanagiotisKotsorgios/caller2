@@ -10,6 +10,6 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 }
 $pageTitle='My Account'; include __DIR__.'/includes/header.php';
 ?>
-<div class="page-head"><div><h1>My Account</h1><p><?=e($user['name'])?> · <?=e(ucfirst($user['role']))?><?php if($user['role']==='caller'):?> · <?=e($user['commission_percent'])?>% default commission<?php endif;?></p></div></div>
+<div class="page-head"><div><h1>My Account</h1><p><?=e($user['name'])?> · <?=e(ucfirst($user['role']))?><?php if($user['role']==='caller'):?> · <?=e($user['commission_percent'])?>% commission · standard <?=money($user['standard_price'])?><?php endif;?></p></div></div>
 <form class="panel form-grid single narrow" method="post"><input type="hidden" name="csrf" value="<?=e(csrf_token())?>"><?php if($error):?><div class="flash error"><?=e($error)?></div><?php endif;?><label>Current password<input type="password" name="old_password" required></label><label>New password<input type="password" name="new_password" minlength="8" required></label><button class="btn primary" type="submit">Change password</button></form>
 <?php include __DIR__.'/includes/footer.php';?>

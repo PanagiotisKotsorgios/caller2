@@ -36,6 +36,13 @@ function db(): PDO
     return $pdo;
 }
 
+function column_exists(PDO $pdo, string $table, string $column): bool
+{
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+    $stmt->execute([$table, $column]);
+    return (int)$stmt->fetchColumn() > 0;
+}
+
 function ensure_schema(PDO $pdo): void
 {
     static $done = false;
@@ -48,6 +55,7 @@ function ensure_schema(PDO $pdo): void
         password_hash VARCHAR(255) NOT NULL,
         role ENUM('admin','caller') NOT NULL DEFAULT 'caller',
         commission_percent DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+        standard_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
         active TINYINT(1) NOT NULL DEFAULT 1,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -59,7 +67,12 @@ function ensure_schema(PDO $pdo): void
         contact_name VARCHAR(120) NULL,
         phone VARCHAR(80) NULL,
         email VARCHAR(180) NULL,
+        address VARCHAR(255) NULL,
         city VARCHAR(120) NULL,
+        region VARCHAR(120) NULL,
+        category VARCHAR(180) NULL,
+        subcategory VARCHAR(180) NULL,
+        source_comments VARCHAR(255) NULL,
         service_type VARCHAR(30) NOT NULL DEFAULT 'website',
         status VARCHAR(40) NOT NULL DEFAULT 'new',
         demo_sent TINYINT(1) NOT NULL DEFAULT 0,
@@ -77,9 +90,29 @@ function ensure_schema(PDO $pdo): void
         INDEX idx_assigned_to (assigned_to),
         INDEX idx_sale_date (sale_date),
         INDEX idx_follow_up_date (follow_up_date),
+        INDEX idx_city (city),
+        INDEX idx_region (region),
         CONSTRAINT fk_leads_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
         CONSTRAINT fk_leads_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Small automatic migrations so an already-running installation upgrades itself on redeploy.
+    if (!column_exists($pdo, 'users', 'standard_price')) {
+        $pdo->exec("ALTER TABLE users ADD standard_price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER commission_percent");
+    }
+
+    $leadColumns = [
+        'address' => "ALTER TABLE leads ADD address VARCHAR(255) NULL AFTER email",
+        'region' => "ALTER TABLE leads ADD region VARCHAR(120) NULL AFTER city",
+        'category' => "ALTER TABLE leads ADD category VARCHAR(180) NULL AFTER region",
+        'subcategory' => "ALTER TABLE leads ADD subcategory VARCHAR(180) NULL AFTER category",
+        'source_comments' => "ALTER TABLE leads ADD source_comments VARCHAR(255) NULL AFTER subcategory",
+    ];
+    foreach ($leadColumns as $column => $sql) {
+        if (!column_exists($pdo, 'leads', $column)) {
+            $pdo->exec($sql);
+        }
+    }
 
     $done = true;
 }

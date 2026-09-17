@@ -1,102 +1,94 @@
-# Simple Sales Team CRM — PHP + MySQL
+# Sales Team CRM — PHP + MySQL
 
-A lightweight CRM for an outbound sales/cold-calling team. It uses plain PHP, Apache and MySQL — no framework, no Composer and no Node.js.
+A deliberately simple CRM for a cold-calling team. No Laravel, Node, React, Composer or external PHP packages.
 
-## What is included
+## Main features
 
-- Admin and Caller accounts
-- Default commission percentage per caller
-- Leads for Website / E-shop / Other
-- Pipeline statuses: New, No Answer, Contacted, Demo Sent, Follow Up, Interested, Won, Lost, Not Interested
-- Colored lead rows: green for Won, red for Lost/Not Interested, yellow for Demo Sent, blue for Interested
-- Demo-sent tracking
-- Follow-up dates and notes
-- Estimated and final sale values
-- Per-sale commission percentage snapshot and admin override
-- Admin dashboard with caller statistics
-- Caller dashboard limited to that caller's assigned leads
-- Monthly commission report and CSV export
-- Filtered lead CSV export
-- Password hashing, sessions, role checks and CSRF protection
-- Persistent MySQL storage
-- Automatic database/table creation
-- Docker Compose stack designed for Coolify
+- Admin and Caller roles
+- **Only Admin controls caller commission % and standard selling price**
+- Admin creates/imports leads and assigns them to callers
+- Callers can see **only leads assigned to their own account**
+- Callers cannot assign leads to themselves or see another caller's leads
+- Website / E-shop / Other services
+- Pipeline states: New, No Answer, Contacted, Demo Sent, Follow Up, Interested, Won, Lost, Not Interested
+- Green rows for Won, red for Lost/Not Interested, yellow for Demo Sent, blue for Interested
+- Follow-up date, demo tracking and notes
+- Final sale value and monthly commission calculation
+- When a lead is Won, the caller commission rate is snapshotted onto that sale
+- If a Won lead has no final sale price, the caller's admin-defined standard price is used automatically
+- Admin dashboard with per-caller leads, sales, revenue, standard price and commission
+- Monthly payout report + CSV export
+- Lead CSV export
 
-## Coolify: zero database setup / zero manual environment variables
+## XLSX lead importing
 
-The repository contains a complete `docker-compose.yml` with **two containers**:
+Admin has an **Import XLSX** page. It is designed to directly accept sheets such as `Mix_Kladoi_Auto_Ydraulika_2000.xlsx` with columns like:
 
-1. `app` — PHP 8.3 + Apache CRM
+- Α/Α
+- Όνομα Επιχείρησης
+- Διεύθυνση
+- Περιοχή / Πόλη
+- Νομός / Π.Ε.
+- Τηλέφωνο
+- Κατηγορία Κλάδου
+- Υποκατηγορία
+- Πηγή / Σχόλια
+- Κατάσταση
+
+The importer automatically finds the worksheet containing `Όνομα Επιχείρησης`, so a workbook may also contain a summary sheet before the data sheet.
+
+During import Admin can:
+
+- leave all imported leads Unassigned, or assign the whole import to one caller
+- choose Website / E-shop / Other as the default service
+- skip duplicates based on business + phone + city, or import everything
+
+After import, the Leads page has checkboxes. Admin can select specific leads and bulk:
+
+- assign them to a caller
+- unassign them
+- change status
+- change service
+
+This makes it easy to import thousands of leads first, then distribute selected groups among callers. Callers only see their assigned subset.
+
+## Coolify deployment
+
+The repository includes a full `docker-compose.yml` with:
+
+1. `app` — PHP 8.3 + Apache
 2. `mysql` — MySQL 8.4
 
-You do **not** need to create a separate MySQL resource in Coolify and you do **not** need to type database environment variables yourself.
+The PHP image includes the ZIP/XML support needed for XLSX imports.
 
-The Compose file uses Coolify generated stack variables:
+No separate MySQL resource is needed. Coolify-generated stack secrets are used automatically:
 
 - `SERVICE_PASSWORD_64_MYSQL`
 - `SERVICE_PASSWORD_64_MYSQLROOT`
 
-Coolify generates and persists these values automatically. The same generated MySQL password is passed to both the application and MySQL containers.
+### Deploy / update
 
-The MySQL data is stored in the persistent `mysql_data` Docker volume.
+1. Replace your GitHub repository files with this project.
+2. Keep the resource as **Docker Compose** in Coolify.
+3. Click **Redeploy**.
 
-### Deploy
+On an existing installation, the application automatically adds the new database columns (`standard_price`, address, region, category, subcategory and source comments). Existing users, leads and MySQL data stay in the persistent `mysql_data` volume.
 
-1. Unzip this project and push all files to the root of your GitHub repository.
-2. In Coolify choose **New Resource → Public/Private Repository** and select your repository.
-3. Set **Build Pack = Docker Compose**.
-4. Use `docker-compose.yml` as the Compose file. If the project is at repository root, Base Directory is `/`.
-5. Click **Deploy**.
+Do **not** delete the MySQL volume when updating.
 
-That is all that is required for the application and database containers.
+## First deployment only
 
-The Compose file also declares `SERVICE_URL_APP_80`, so on a Coolify installation with a wildcard domain configured, Coolify can generate a URL and route it to the CRM container's internal port 80. You can instead set your own domain on the `app` service in Coolify whenever you want.
+Open the CRM URL. If there are no users, `/setup.php` creates the first administrator account. Then use **Team** to create caller accounts and set each caller's commission percentage and standard price.
 
-MySQL is **not published to the public server interface**; it is reachable only over the internal Compose network by the PHP application.
+## Commission behavior
 
-## First browser visit
+Example caller settings:
 
-When the stack is running:
+- Commission: 15%
+- Standard price: €400
 
-1. Open the CRM URL/domain.
-2. If no users exist, the application redirects to `/setup.php`.
-3. Create the first administrator account.
-4. Log in.
-5. Go to **Team** and create caller accounts and commission percentages.
+If a lead is sold for €500, commission = €75.
 
-No SQL import is required. MySQL creates the `crm` database automatically and the PHP application creates its tables automatically.
+If that lead is marked Won without a final sale value, €400 is used as the final value and commission = €60.
 
-## Startup behavior
-
-- MySQL starts first.
-- Docker waits for the MySQL health check to pass.
-- The PHP/Apache container then starts.
-- The CRM connects using the internal hostname `mysql`.
-- Missing application tables are created automatically.
-- Both containers restart automatically unless intentionally stopped.
-
-## Commission logic
-
-Each caller has a default percentage, for example 10%.
-
-When a lead is changed to **Won**, the caller's current percentage is copied onto that lead. This keeps the commission for that sale unchanged even if the caller's default percentage is changed later.
-
-An administrator may also set a custom commission percentage on an individual lead.
-
-Monthly reports use the sale date:
-
-```text
-commission owed = final sale value × commission percentage / 100
-```
-
-## Local Docker deployment
-
-Coolify generates the two `SERVICE_PASSWORD_...` variables automatically. If you want to run the same Compose file manually outside Coolify, provide them before running Compose, for example:
-
-```bash
-export SERVICE_PASSWORD_64_MYSQL='local-crm-password'
-export SERVICE_PASSWORD_64_MYSQLROOT='local-root-password'
-docker compose up -d --build
-```
-
-For Coolify, these manual exports are not needed.
+The commission percentage is snapshotted when the sale becomes Won, so changing the caller's default percentage later does not rewrite old completed sales.

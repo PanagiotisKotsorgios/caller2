@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin','caller') NOT NULL DEFAULT 'caller',
   commission_percent DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+  standard_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -16,7 +17,12 @@ CREATE TABLE IF NOT EXISTS leads (
   contact_name VARCHAR(120) NULL,
   phone VARCHAR(80) NULL,
   email VARCHAR(180) NULL,
+  address VARCHAR(255) NULL,
   city VARCHAR(120) NULL,
+  region VARCHAR(120) NULL,
+  category VARCHAR(180) NULL,
+  subcategory VARCHAR(180) NULL,
+  source_comments VARCHAR(255) NULL,
   service_type VARCHAR(30) NOT NULL DEFAULT 'website',
   status VARCHAR(40) NOT NULL DEFAULT 'new',
   demo_sent TINYINT(1) NOT NULL DEFAULT 0,
@@ -30,7 +36,7 @@ CREATE TABLE IF NOT EXISTS leads (
   created_by INT UNSIGNED NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_status (status), INDEX idx_assigned_to (assigned_to), INDEX idx_sale_date (sale_date), INDEX idx_follow_up_date (follow_up_date),
+  INDEX idx_status (status), INDEX idx_assigned_to (assigned_to), INDEX idx_sale_date (sale_date), INDEX idx_follow_up_date (follow_up_date), INDEX idx_city (city), INDEX idx_region (region),
   CONSTRAINT fk_leads_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
   CONSTRAINT fk_leads_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

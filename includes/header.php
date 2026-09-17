@@ -9,7 +9,7 @@ $flashes = pull_flashes();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($pageTitle) ?> · <?= e(app_name()) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=1">
+    <link rel="stylesheet" href="assets/style.css?v=2">
 </head>
 <body>
 <header class="topbar">
@@ -19,6 +19,7 @@ $flashes = pull_flashes();
         <a href="dashboard.php">Dashboard</a>
         <a href="leads.php">Leads</a>
         <?php if ($user['role'] === 'admin'): ?>
+            <a href="import.php">Import XLSX</a>
             <a href="users.php">Team</a>
             <a href="reports.php">Reports</a>
         <?php endif; ?>

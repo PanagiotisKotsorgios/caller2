@@ -13,7 +13,7 @@ function current_user(): ?array
     $id = $_SESSION['user_id'] ?? null;
     if (!$id) return null;
 
-    $stmt = db()->prepare('SELECT id, name, username, role, commission_percent, active FROM users WHERE id = ? LIMIT 1');
+    $stmt = db()->prepare('SELECT id, name, username, role, commission_percent, standard_price, active FROM users WHERE id = ? LIMIT 1');
     $stmt->execute([$id]);
     $row = $stmt->fetch();
     if (!$row || !(int)$row['active']) {
