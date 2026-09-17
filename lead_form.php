@@ -6,11 +6,6 @@ $user = require_login();
 $pdo = db();
 $id = (int)($_GET['id'] ?? 0);
 
-if (!$id && $user['role'] !== 'admin') {
-    http_response_code(403);
-    exit('Only an administrator can create and assign new leads.');
-}
-
 $lead = [
     'id'=>0,'company_name'=>'','contact_name'=>'','phone'=>'','email'=>'','address'=>'','city'=>'','region'=>'','category'=>'','subcategory'=>'','source_comments'=>'',
     'service_type'=>'website','status'=>'new','demo_sent'=>0,'follow_up_date'=>'','estimated_value'=>'','sale_value'=>'','sale_date'=>'','commission_percent'=>'','notes'=>'','assigned_to'=>''
@@ -25,7 +20,7 @@ $callers = $user['role']==='admin' ? $pdo->query("SELECT id,name,commission_perc
 $pageTitle = $id ? 'Edit Lead' : 'Add Lead';
 include __DIR__ . '/includes/header.php';
 ?>
-<div class="page-head"><div><h1><?= $id?'Edit lead':'Add lead' ?></h1><p><?= $id?'Update contact, pipeline and sale details.':'Create a lead and assign it to a caller.' ?></p></div><a class="btn" href="leads.php">← Back</a></div>
+<div class="page-head"><div><h1><?= $id?'Edit lead':'Add lead' ?></h1><p><?= $id?'Update contact, pipeline and sale details.':($user['role']==='admin'?'Create a lead and assign it to a caller.':'Create a lead for yourself. It will automatically be assigned and registered to your account.') ?></p></div><a class="btn" href="leads.php">← Back</a></div>
 <form method="post" action="lead_save.php" class="panel form-grid">
     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="id" value="<?= (int)$lead['id'] ?>">
     <label>Business / company *<input name="company_name" required value="<?= e($lead['company_name']) ?>"></label>

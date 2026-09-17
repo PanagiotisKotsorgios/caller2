@@ -6,9 +6,10 @@ A deliberately simple CRM for a cold-calling team. No Laravel, Node, React, Comp
 
 - Admin and Caller roles
 - **Only Admin controls caller commission % and standard selling price**
-- Admin creates/imports leads and assigns them to callers
-- Callers can see **only leads assigned to their own account**
-- Callers cannot assign leads to themselves or see another caller's leads
+- Admin can create/import leads and assign them to callers
+- Callers can also manually add leads and import their own XLSX sheets; those leads are automatically assigned and registered to that caller
+- Callers can see **only leads assigned to their own account** and cannot see another caller's leads
+- Admin can always see who originally registered/imported each lead
 - Website / E-shop / Other services
 - Pipeline states: New, No Answer, Contacted, Demo Sent, Follow Up, Interested, Won, Lost, Not Interested
 - Green rows for Won, red for Lost/Not Interested, yellow for Demo Sent, blue for Interested
@@ -19,10 +20,13 @@ A deliberately simple CRM for a cold-calling team. No Laravel, Node, React, Comp
 - Admin dashboard with per-caller leads, sales, revenue, standard price and commission
 - Monthly payout report + CSV export
 - Lead CSV export
+- Admin bulk-delete selected leads
+- Admin import history with one-click deletion of an entire XLSX import batch
+- Admin deletion tools for imported leads, leads registered by a specific user, leads assigned to a caller, or **all leads on the platform**
 
 ## XLSX lead importing
 
-Admin has an **Import XLSX** page. It is designed to directly accept sheets such as `Mix_Kladoi_Auto_Ydraulika_2000.xlsx` with columns like:
+Admin and callers have an **Import XLSX** page. Callers can only import directly into their own account; Admin can import unassigned or assign an import to any caller. It is designed to directly accept sheets such as `Mix_Kladoi_Auto_Ydraulika_2000.xlsx` with columns like:
 
 - Α/Α
 - Όνομα Επιχείρησης
@@ -37,11 +41,13 @@ Admin has an **Import XLSX** page. It is designed to directly accept sheets such
 
 The importer automatically finds the worksheet containing `Όνομα Επιχείρησης`, so a workbook may also contain a summary sheet before the data sheet.
 
-During import Admin can:
+During import:
 
-- leave all imported leads Unassigned, or assign the whole import to one caller
-- choose Website / E-shop / Other as the default service
-- skip duplicates based on business + phone + city, or import everything
+- Admin can leave all imported leads Unassigned, or assign the whole import to one caller
+- Callers automatically receive ownership of their own imported leads
+- the CRM records who imported the batch and gives each new import a batch number
+- Website / E-shop / Other can be selected as the default service
+- duplicates can be skipped based on business + phone + city, or imported anyway
 
 After import, the Leads page has checkboxes. Admin can select specific leads and bulk:
 
@@ -49,6 +55,9 @@ After import, the Leads page has checkboxes. Admin can select specific leads and
 - unassign them
 - change status
 - change service
+- permanently delete the selected leads
+
+The **Imports** page lets Admin delete a complete tracked XLSX batch. **Delete tools** provides larger cleanup actions, including deleting all tracked imports, all leads registered by one user, all leads assigned to one caller, or every lead in the CRM. Full deletion keeps user accounts, commissions, standard prices and login settings.
 
 This makes it easy to import thousands of leads first, then distribute selected groups among callers. Callers only see their assigned subset.
 
@@ -72,7 +81,7 @@ No separate MySQL resource is needed. Coolify-generated stack secrets are used a
 2. Keep the resource as **Docker Compose** in Coolify.
 3. Click **Redeploy**.
 
-On an existing installation, the application automatically adds the new database columns (`standard_price`, address, region, category, subcategory and source comments). Existing users, leads and MySQL data stay in the persistent `mysql_data` volume.
+On an existing installation, the application automatically adds the required lead/import tracking fields and creates the import-batch table. Existing users, leads and MySQL data stay in the persistent `mysql_data` volume. Older leads remain valid; they simply have no import-batch number.
 
 Do **not** delete the MySQL volume when updating.
 

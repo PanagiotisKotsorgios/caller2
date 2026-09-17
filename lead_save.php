@@ -4,8 +4,6 @@ require __DIR__ . '/includes/functions.php';
 require __DIR__ . '/includes/auth.php';
 $user=require_login(); verify_csrf(); $pdo=db();
 $id=(int)($_POST['id']??0);
-if (!$id && $user['role'] !== 'admin') { http_response_code(403); exit('Only an administrator can create leads.'); }
-
 $existing=null;
 if($id){
     $s=$pdo->prepare('SELECT * FROM leads WHERE id=?');$s->execute([$id]);$existing=$s->fetch();
@@ -15,7 +13,7 @@ if($id){
 $company=trim($_POST['company_name']??''); if($company===''){flash('error','Business name is required.');redirect($id?'lead_form.php?id='.$id:'lead_form.php');}
 $status=$_POST['status']??'new'; if(!isset(statuses()[$status]))$status='new';
 $service=$_POST['service_type']??'website'; if(!isset(service_types()[$service]))$service='website';
-$assigned = $user['role']==='admin' ? ((int)($_POST['assigned_to']??0) ?: null) : (int)$existing['assigned_to'];
+$assigned = $user['role']==='admin' ? ((int)($_POST['assigned_to']??0) ?: null) : ($id ? (int)$existing['assigned_to'] : (int)$user['id']);
 
 $commission = $existing && $existing['commission_percent']!==null ? (float)$existing['commission_percent'] : null;
 if($user['role']==='admin') {

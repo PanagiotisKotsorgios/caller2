@@ -33,6 +33,7 @@ $callerStats = [];
 if ($user['role'] === 'admin') {
     $callerStats = $pdo->query("SELECT u.id,u.name,u.commission_percent,u.standard_price,
         COUNT(l.id) total_leads,
+        (SELECT COUNT(*) FROM leads cr WHERE cr.created_by=u.id) registered_leads,
         COALESCE(SUM(l.status='won'),0) won,
         COALESCE(SUM(CASE WHEN l.status='won' THEN l.sale_value ELSE 0 END),0) revenue,
         COALESCE(SUM(CASE WHEN l.status='won' THEN COALESCE(l.sale_value,0)*COALESCE(l.commission_percent,u.commission_percent,0)/100 ELSE 0 END),0) commission
@@ -46,7 +47,7 @@ include __DIR__ . '/includes/header.php';
 ?>
 <div class="page-head">
     <div><h1>Dashboard</h1><p><?= $user['role']==='admin' ? 'Team overview' : 'Your lead and sales overview' ?></p></div>
-    <?php if($user['role']==='admin'): ?><a class="btn primary" href="lead_form.php">+ Add lead</a><?php endif; ?>
+    <div class="form-actions"><a class="btn" href="import.php">Import XLSX</a><a class="btn primary" href="lead_form.php">+ Add lead</a></div>
 </div>
 
 <div class="stats-grid">
@@ -62,11 +63,11 @@ include __DIR__ . '/includes/header.php';
 <section class="panel">
     <div class="panel-head"><h2>Caller performance</h2><a href="reports.php">Monthly report →</a></div>
     <div class="table-wrap"><table>
-        <thead><tr><th>Caller</th><th>Leads</th><th>Won</th><th>Revenue</th><th>Default %</th><th>Standard price</th><th>Commission</th></tr></thead>
+        <thead><tr><th>Caller</th><th>Assigned leads</th><th>Registered by caller</th><th>Won</th><th>Revenue</th><th>Default %</th><th>Standard price</th><th>Commission</th></tr></thead>
         <tbody>
-        <?php if (!$callerStats): ?><tr><td colspan="7" class="muted">No callers yet.</td></tr><?php endif; ?>
+        <?php if (!$callerStats): ?><tr><td colspan="8" class="muted">No callers yet.</td></tr><?php endif; ?>
         <?php foreach ($callerStats as $c): ?>
-            <tr><td><strong><?= e($c['name']) ?></strong></td><td><?= (int)$c['total_leads'] ?></td><td><?= (int)$c['won'] ?></td><td><?= money($c['revenue']) ?></td><td><?= e($c['commission_percent']) ?>%</td><td><?= money($c['standard_price']) ?></td><td><strong><?= money($c['commission']) ?></strong></td></tr>
+            <tr><td><strong><?= e($c['name']) ?></strong></td><td><?= (int)$c['total_leads'] ?></td><td><?= (int)$c['registered_leads'] ?></td><td><?= (int)$c['won'] ?></td><td><?= money($c['revenue']) ?></td><td><?= e($c['commission_percent']) ?>%</td><td><?= money($c['standard_price']) ?></td><td><strong><?= money($c['commission']) ?></strong></td></tr>
         <?php endforeach; ?>
         </tbody>
     </table></div>

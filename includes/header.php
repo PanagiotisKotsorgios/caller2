@@ -18,10 +18,11 @@ $flashes = pull_flashes();
     <nav>
         <a href="dashboard.php">Dashboard</a>
         <a href="leads.php">Leads</a>
+        <a href="import.php">Import XLSX</a>
         <?php if ($user['role'] === 'admin'): ?>
-            <a href="import.php">Import XLSX</a>
             <a href="users.php">Team</a>
             <a href="reports.php">Reports</a>
+            <a href="imports.php">Imports</a>
         <?php endif; ?>
         <a href="profile.php">My Account</a>
         <a href="logout.php">Logout</a>

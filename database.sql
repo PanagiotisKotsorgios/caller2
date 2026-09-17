@@ -11,6 +11,20 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS lead_import_batches (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  filename VARCHAR(255) NOT NULL,
+  imported_by INT UNSIGNED NULL,
+  assigned_to INT UNSIGNED NULL,
+  imported_count INT UNSIGNED NOT NULL DEFAULT 0,
+  skipped_count INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_imported_by (imported_by),
+  INDEX idx_batch_assigned_to (assigned_to),
+  CONSTRAINT fk_batches_imported_by FOREIGN KEY (imported_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_batches_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS leads (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   company_name VARCHAR(180) NOT NULL,
@@ -34,9 +48,10 @@ CREATE TABLE IF NOT EXISTS leads (
   notes TEXT NULL,
   assigned_to INT UNSIGNED NULL,
   created_by INT UNSIGNED NULL,
+  import_batch_id INT UNSIGNED NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_status (status), INDEX idx_assigned_to (assigned_to), INDEX idx_sale_date (sale_date), INDEX idx_follow_up_date (follow_up_date), INDEX idx_city (city), INDEX idx_region (region),
+  INDEX idx_status (status), INDEX idx_assigned_to (assigned_to), INDEX idx_sale_date (sale_date), INDEX idx_follow_up_date (follow_up_date), INDEX idx_city (city), INDEX idx_region (region), INDEX idx_import_batch_id (import_batch_id),
   CONSTRAINT fk_leads_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
   CONSTRAINT fk_leads_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
